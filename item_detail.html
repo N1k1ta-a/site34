@@ -2,13 +2,28 @@
 {% block title %}{{ item.title }}{% endblock %}
 {% block content %}
     <h1>{{ item.title }}</h1>
+    
+    {% if item.image %}
+        <img src="{{ url_for('static', filename='uploads/' + item.image) }}" alt="{{ item.title }}" class="detail-image">
+    {% endif %}
+
     <p><b>Категория:</b> {{ item.category.name if item.category else '—' }}</p>
     <p><b>Описание:</b> {{ item.description or 'Описание отсутствует' }}</p>
     <p><b>Статус:</b> 
         {% if item.available %}<span class="text-success">Свободна</span>
         {% else %}<span class="text-danger">Занята</span>{% endif %}
     </p>
-    <div class="actions">
+
+    {% if item.images %}
+        <h3>Галерея</h3>
+        <div class="gallery">
+            {% for img in item.images %}
+                <img src="{{ url_for('static', filename='uploads/' + img.filename) }}" alt="Фото {{ item.title }}" class="gallery-item">
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="actions" style="margin-top: 20px;">
         {% if current_user.is_authenticated and current_user.is_admin() %}
             <a href="{{ url_for('item_edit', item_id=item.id) }}" class="btn">Редактировать</a>
         {% endif %}

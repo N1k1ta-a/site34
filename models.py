@@ -17,6 +17,16 @@ class Item(db.Model):
     description = db.Column(db.Text, nullable=True)
     available = db.Column(db.Boolean, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
+    
+    # Поля для изображений
+    image = db.Column(db.String(200), nullable=True) # Главная обложка
+    images = db.relationship('Image', backref='item', cascade='all, delete-orphan') # Галерея
+
+class Image(db.Model):
+    __tablename__ = 'images'
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(200), nullable=False)
+    item_id = db.Column(db.Integer, db.ForeignKey('items.id'), nullable=False)
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'

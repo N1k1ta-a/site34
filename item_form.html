@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-
 {% block title %}{{ 'Редактировать' if item else 'Добавить' }} зону{% endblock %}
-
 {% block content %}
     <h1>{{ 'Редактировать' if item else 'Добавить' }} зону</h1>
-
-    <form method="POST" class="admin-form">
+    
+    <!-- Обязательно enctype="multipart/form-data" -->
+    <form method="POST" enctype="multipart/form-data" class="admin-form">
         <p>
             <label>Название (обязательно):<br>
                 <input type="text" name="title" value="{{ item.title if item else '' }}" required>
@@ -24,6 +23,16 @@
                         <option value="{{ cat.id }}" {% if item and item.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                     {% endfor %}
                 </select>
+            </label>
+        </p>
+        <p>
+            <label>Главная обложка (1 файл):<br>
+                <input type="file" name="image" accept="image/*">
+            </label>
+        </p>
+        <p>
+            <label>Дополнительные фото (можно несколько):<br>
+                <input type="file" name="images" accept="image/*" multiple>
             </label>
         </p>
         <p>

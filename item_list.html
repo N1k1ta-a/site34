@@ -32,11 +32,21 @@
         <ul class="item-list">
             {% for item in items %}
                 <li>
-                    <div>
-                        <a href="{{ url_for('item_detail', item_id=item.id) }}"><b>{{ item.title }}</b></a>
-                        <span class="badge">{{ item.category.name if item.category else '—' }}</span>
-                        {% if not item.available %} — <span class="text-danger">занято</span>{% endif %}
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <!-- Миниатюра -->
+                        {% if item.image %}
+                            <img src="{{ url_for('static', filename='uploads/' + item.image) }}" alt="{{ item.title }}" class="thumb">
+                        {% else %}
+                            <span class="no-image">—</span>
+                        {% endif %}
+                        
+                        <div>
+                            <a href="{{ url_for('item_detail', item_id=item.id) }}"><b>{{ item.title }}</b></a>
+                            <span class="badge">{{ item.category.name if item.category else '—' }}</span>
+                            {% if not item.available %} — <span class="text-danger">занято</span>{% endif %}
+                        </div>
                     </div>
+                    
                     {% if current_user.is_authenticated and current_user.is_admin() %}
                         <form method="POST" action="{{ url_for('item_delete', item_id=item.id) }}">
                             <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить?')">Удалить</button>

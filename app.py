@@ -1,15 +1,26 @@
+import os
+import uuid
+from functools import wraps
 from flask import (
     Flask, render_template, request, redirect, url_for,
     flash, jsonify, abort,
 )
-from models import db, Category, Item, User
+from werkzeug.utils import secure_filename
+from models import db, Category, Item, User, Image
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = "secret-key"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# --- Настройки для загрузки файлов ---
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 МБ
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+# Убедимся, что папка существует
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db.init_app(app)
 
@@ -25,6 +36,21 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 club_name = "RAVE by Buster"
+
+# --- Вспомогательные функции для файлов ---
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_image(file):
+    if not file or file.filename == '':
+        return None
+    if not allowed_file(file.filename):
+        return None
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    unique_name = f'{uuid.uuid4().hex}.{ext}'
+    path = os.path.join(app.config['UPLOAD_FOLDER'], unique_name)
+    file.save(path)
+    return unique_name
 
 # --- Декоратор для проверки прав администратора ---
 def admin_required(f):
@@ -73,11 +99,9 @@ with app.app_context():
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-        
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
-        
         if not username or not password:
             flash("Заполните все поля", "error")
         elif len(username) < 3:
@@ -93,26 +117,22 @@ def register():
             db.session.commit()
             flash("Регистрация успешна! Теперь войдите.", "success")
             return redirect(url_for("login"))
-            
     return render_template("register.html", site_name=club_name)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-        
     if request.method == "POST":
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "").strip()
         user = User.query.filter_by(username=username).first()
-        
         if user and user.check_password(password):
             login_user(user)
             flash(f"С возвращением, {user.username}!", "success")
             return redirect(url_for("index"))
         else:
             flash("Неверный логин или пароль", "error")
-            
     return render_template("login.html", site_name=club_name)
 
 @app.route("/logout")
@@ -133,7 +153,6 @@ def change_password():
     if request.method == "POST":
         old_pass = request.form.get("old_password", "").strip()
         new_pass = request.form.get("new_password", "").strip()
-        
         if not current_user.check_password(old_pass):
             flash("Неверный старый пароль", "error")
         elif len(new_pass) < 6:
@@ -143,7 +162,6 @@ def change_password():
             db.session.commit()
             flash("Пароль успешно изменён", "success")
             return redirect(url_for("profile"))
-            
     return render_template("change_password.html", site_name=club_name)
 
 @app.route("/users")
@@ -175,10 +193,8 @@ def item_list():
     category_id = request.args.get('category', type=int)
     q = request.args.get('q', '').strip()
     query = Item.query
-    
     if category_id: query = query.filter_by(category_id=category_id)
     if q: query = query.filter(Item.title.contains(q))
-        
     items = query.all()
     categories = Category.query.all()
     return render_template('item_list.html', items=items, categories=categories, 
@@ -197,11 +213,27 @@ def item_add():
         if not title:
             flash("Название обязательно", "error")
             return redirect(url_for("item_add"))
+
+        # Сохранение главного изображения
+        image_name = save_image(request.files.get('image'))
+        if request.files.get('image') and not image_name:
+            flash('Недопустимый формат файла (только png, jpg, jpeg, gif, webp)', "error")
+            return redirect(url_for("item_add"))
             
         new_item = Item(title=title, description=description, available=available,
-                        category_id=int(category_id) if category_id else None)
+                        category_id=int(category_id) if category_id else None,
+                        image=image_name)
         db.session.add(new_item)
         db.session.commit()
+
+        # Сохранение галереи (несколько файлов)
+        files = request.files.getlist('images')
+        for file in files:
+            name = save_image(file)
+            if name:
+                db.session.add(Image(filename=name, item_id=new_item.id))
+        db.session.commit()
+
         flash(f"Зона «{title}» добавлена", "success")
         return redirect(url_for("item_list"))
         
@@ -228,7 +260,27 @@ def item_edit(item_id):
         if not item.title:
             flash("Название обязательно", "error")
             return redirect(url_for("item_edit", item_id=item.id))
+
+        # Замена главного изображения
+        new_image = save_image(request.files.get('image'))
+        if request.files.get('image') and not new_image:
+            flash('Недопустимый формат файла', "error")
+            return redirect(url_for("item_edit", item_id=item.id))
             
+        if new_image:
+            if item.image:
+                old_path = os.path.join(app.config['UPLOAD_FOLDER'], item.image)
+                if os.path.exists(old_path):
+                    os.remove(old_path)
+            item.image = new_image
+
+        # Добавление в галерею
+        files = request.files.getlist('images')
+        for file in files:
+            name = save_image(file)
+            if name:
+                db.session.add(Image(filename=name, item_id=item.id))
+
         db.session.commit()
         flash("Зона обновлена", "success")
         return redirect(url_for("item_detail", item_id=item.id))
@@ -239,6 +291,19 @@ def item_edit(item_id):
 @admin_required
 def item_delete(item_id):
     item = Item.query.get_or_404(item_id)
+    
+    # Удаление главной картинки с диска
+    if item.image:
+        path = os.path.join(app.config['UPLOAD_FOLDER'], item.image)
+        if os.path.exists(path):
+            os.remove(path)
+
+    # Удаление картинок из галереи с диска
+    for img in item.images:
+        path = os.path.join(app.config['UPLOAD_FOLDER'], img.filename)
+        if os.path.exists(path):
+            os.remove(path)
+
     db.session.delete(item)
     db.session.commit()
     flash('Элемент удалён', 'success')
@@ -268,7 +333,7 @@ def category_add():
     return render_template("category_form.html", site_name=club_name)
 
 # ==========================================
-# ОБЫЧНЫЕ СТРАНИЦЫ И СТАРЫЕ ЗАДАНИЯ
+# ОБЫЧНЫЕ СТРАНИЦЫ, СТАРЫЕ ЗАДАНИЯ И ОШИБКИ
 # ==========================================
 
 @app.route("/")
@@ -326,6 +391,7 @@ def go(username):
 def show_user(username):
     return render_template("user.html", name=username, site_name=club_name)
 
+# API JSON
 api_items = [
     {"id": 1, "title": "Общий зал", "description": "80 ПК, 240Hz+"},
     {"id": 2, "title": "VIP-комната", "description": "600Hz, топовое железо"},
@@ -369,6 +435,11 @@ def not_found(err):
 @app.errorhandler(405)
 def method_not_allowed(err):
     return render_template("405.html", site_name=club_name), 405
+
+@app.errorhandler(413)
+def too_large(error):
+    flash('Файл слишком большой (максимум 2 МБ)', 'error')
+    return redirect(request.referrer or url_for('item_list'))
 
 if __name__ == "__main__":
     app.run(debug=True)
