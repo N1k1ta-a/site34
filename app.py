@@ -14,17 +14,16 @@ app.secret_key = "secret-key"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# --- Настройки для загрузки файлов ---
+
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 МБ
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
-# Убедимся, что папка существует
+
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db.init_app(app)
 
-# --- Настройка Flask-Login ---
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -37,7 +36,6 @@ def load_user(user_id):
 
 club_name = "RAVE by Buster"
 
-# --- Вспомогательные функции для файлов ---
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -52,7 +50,6 @@ def save_image(file):
     file.save(path)
     return unique_name
 
-# --- Декоратор для проверки прав администратора ---
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -62,9 +59,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-# ==========================================
-# СОЗДАНИЕ ТАБЛИЦ, АВТОЗАПОЛНЕНИЕ И АДМИН
-# ==========================================
+
 with app.app_context():
     db.create_all()
 
@@ -91,9 +86,6 @@ with app.app_context():
         db.session.add_all(items)
         db.session.commit()
 
-# ==========================================
-# АУТЕНТИФИКАЦИЯ И ПРОФИЛЬ
-# ==========================================
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -184,9 +176,6 @@ def toggle_role(user_id):
         flash(f"Роль пользователя {user.username} изменена на {user.role}", "success")
     return redirect(url_for("user_list"))
 
-# ==========================================
-# ЭЛЕМЕНТЫ И ЗОНЫ
-# ==========================================
 
 @app.route("/items")
 def item_list():
@@ -214,7 +203,6 @@ def item_add():
             flash("Название обязательно", "error")
             return redirect(url_for("item_add"))
 
-        # Сохранение главного изображения
         image_name = save_image(request.files.get('image'))
         if request.files.get('image') and not image_name:
             flash('Недопустимый формат файла (только png, jpg, jpeg, gif, webp)', "error")
@@ -226,7 +214,6 @@ def item_add():
         db.session.add(new_item)
         db.session.commit()
 
-        # Сохранение галереи (несколько файлов)
         files = request.files.getlist('images')
         for file in files:
             name = save_image(file)
@@ -261,7 +248,6 @@ def item_edit(item_id):
             flash("Название обязательно", "error")
             return redirect(url_for("item_edit", item_id=item.id))
 
-        # Замена главного изображения
         new_image = save_image(request.files.get('image'))
         if request.files.get('image') and not new_image:
             flash('Недопустимый формат файла', "error")
@@ -274,7 +260,6 @@ def item_edit(item_id):
                     os.remove(old_path)
             item.image = new_image
 
-        # Добавление в галерею
         files = request.files.getlist('images')
         for file in files:
             name = save_image(file)
@@ -291,14 +276,12 @@ def item_edit(item_id):
 @admin_required
 def item_delete(item_id):
     item = Item.query.get_or_404(item_id)
-    
-    # Удаление главной картинки с диска
+
     if item.image:
         path = os.path.join(app.config['UPLOAD_FOLDER'], item.image)
         if os.path.exists(path):
             os.remove(path)
 
-    # Удаление картинок из галереи с диска
     for img in item.images:
         path = os.path.join(app.config['UPLOAD_FOLDER'], img.filename)
         if os.path.exists(path):
@@ -332,9 +315,6 @@ def category_add():
         return redirect(url_for("category_list"))
     return render_template("category_form.html", site_name=club_name)
 
-# ==========================================
-# ОБЫЧНЫЕ СТРАНИЦЫ, СТАРЫЕ ЗАДАНИЯ И ОШИБКИ
-# ==========================================
 
 @app.route("/")
 def index():
@@ -391,7 +371,6 @@ def go(username):
 def show_user(username):
     return render_template("user.html", name=username, site_name=club_name)
 
-# API JSON
 api_items = [
     {"id": 1, "title": "Общий зал", "description": "80 ПК, 240Hz+"},
     {"id": 2, "title": "VIP-комната", "description": "600Hz, топовое железо"},

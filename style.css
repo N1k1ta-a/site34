@@ -48,7 +48,7 @@ ul li a:hover {
     color: #fff;
 }
 
-/* flash-сообщения */
+
 .flash {
     padding: 8px 12px;
     border-radius: 3px;
@@ -65,7 +65,6 @@ ul li a:hover {
     color: #a8f0c0;
 }
 
-/* формы */
 input[type="text"],
 input[type="password"],
 input[type="number"],
@@ -90,7 +89,7 @@ button:hover {
     background: #ff5c7c;
 }
 
-/* --- СТИЛИ ДЛЯ БАЗЫ ДАННЫХ И НОВЫХ ЭЛЕМЕНТОВ --- */
+
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -236,7 +235,6 @@ nav {
     font-size: 12px;
 }
 
-/* --- Таблица пользователей --- */
 .users-table {
     width: 100%;
     border-collapse: collapse;
@@ -265,7 +263,7 @@ nav {
     border: 1px solid #2a2a33;
     margin-bottom: 20px;
 }
-/* --- Стили для изображений --- */
+
 .thumb {
     width: 60px;
     height: 60px;
@@ -294,7 +292,6 @@ nav {
     border: 1px solid #2a2a33;
 }
 
-/* --- Галерея --- */
 .gallery {
     display: flex;
     flex-wrap: wrap;
@@ -316,7 +313,6 @@ nav {
     transform: scale(1.05);
 }
 
-/* Стилизация input[type="file"] */
 input[type="file"] {
     background: #0b0b0f;
     color: #dcdcdc;

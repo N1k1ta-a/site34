@@ -33,7 +33,7 @@
             {% for item in items %}
                 <li>
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <!-- Миниатюра -->
+                
                         {% if item.image %}
                             <img src="{{ url_for('static', filename='uploads/' + item.image) }}" alt="{{ item.title }}" class="thumb">
                         {% else %}

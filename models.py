@@ -18,7 +18,6 @@ class Item(db.Model):
     available = db.Column(db.Boolean, default=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     
-    # Поля для изображений
     image = db.Column(db.String(200), nullable=True) # Главная обложка
     images = db.relationship('Image', backref='item', cascade='all, delete-orphan') # Галерея
 
