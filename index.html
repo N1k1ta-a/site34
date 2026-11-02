@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+    <h2>Зоны клуба:</h2>
+    
+    {% if items %}
+        <ul class="item-list">
+            {% for i in items %}
+                <li>
+                    <div>
+                        <a href="{{ url_for('item_detail', item_id=i.id) }}"><b>{{ i.title }}</b></a>
+                        <span class="badge">{{ i.category.name if i.category else '—' }}</span>
+                        {% if not i.available %} — <span class="text-danger">занято</span>{% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Зон пока нет. <a href="{{ url_for('item_add') }}">Добавьте первую!</a></p>
+    {% endif %}
+{% endblock %}

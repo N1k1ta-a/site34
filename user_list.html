@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Пользователи{% endblock %}
+{% block content %}
+    <h1>Управление пользователями</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, msg in messages %}
+                <p class="flash flash-{{ category }}">{{ msg }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <table class="users-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Логин</th>
+                <th>Роль</th>
+                <th>Действие</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+                <tr>
+                    <td>{{ u.id }}</td>
+                    <td>{{ u.username }}</td>
+                    <td>
+                        {% if u.is_admin() %}<span class="text-danger"><b>Админ</b></span>
+                        {% else %}<span class="text-success">Пользователь</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if u.username != 'admin' %}
+                            <form method="POST" action="{{ url_for('toggle_role', user_id=u.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-small">
+                                    {{ 'Сделать пользователем' if u.is_admin() else 'Сделать админом' }}
+                                </button>
+                            </form>
+                        {% else %}
+                            <span style="color: #777; font-size: 12px;">Защищён</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

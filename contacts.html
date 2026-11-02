@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Контакты{% endblock %}
+
+{% block content %}
+    <h1>Где нас найти</h1>
+    <ul>
+        <li>Адрес: {{ address }}</li>
+        <li>Почта: {{ email }}</li>
+        <li>Телефон: {{ phone }}</li>
+    </ul>
+    <p>Если не берут трубку — скорее всего, идёт катка.</p>
+{% endblock %}

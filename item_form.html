@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Редактировать' if item else 'Добавить' }} зону{% endblock %}
+
+{% block content %}
+    <h1>{{ 'Редактировать' if item else 'Добавить' }} зону</h1>
+
+    <form method="POST" class="admin-form">
+        <p>
+            <label>Название (обязательно):<br>
+                <input type="text" name="title" value="{{ item.title if item else '' }}" required>
+            </label>
+        </p>
+        <p>
+            <label>Описание:<br>
+                <textarea name="description" rows="4">{{ item.description if item else '' }}</textarea>
+            </label>
+        </p>
+        <p>
+            <label>Категория:<br>
+                <select name="category_id">
+                    <option value="">— без категории —</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if item and item.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </p>
+        <p>
+            <label>
+                <input type="checkbox" name="available" {% if not item or item.available %}checked{% endif %}>
+                Доступна для бронирования
+            </label>
+        </p>
+        <button type="submit" class="btn">Сохранить</button>
+        <a href="{{ url_for('item_list') }}" class="btn btn-clear">Отмена</a>
+    </form>
+{% endblock %}

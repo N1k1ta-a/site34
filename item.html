@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{{ zone.name if zone else "Нет зоны" }}{% endblock %}
+
+{% block content %}
+    {% if zone %}
+        <h1>{{ zone.name }}</h1>
+        <p><b>Что внутри:</b> {{ zone.specs }}</p>
+        <p>{{ zone.desc }}</p>
+
+        <button onclick="deleteItem({{ item_id }})">Удалить (API)</button>
+    {% else %}
+        <h1>Такой зоны нет</h1>
+        <p>Может, её ещё не построили.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('index') }}">← назад</a></p>
+
+    <script>
+        function deleteItem(id) {
+            fetch('/api/item/' + id, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message || data.error);
+                    window.location.href = "{{ url_for('index') }}";
+                });
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ item.title }}{% endblock %}
+{% block content %}
+    <h1>{{ item.title }}</h1>
+    <p><b>Категория:</b> {{ item.category.name if item.category else '—' }}</p>
+    <p><b>Описание:</b> {{ item.description or 'Описание отсутствует' }}</p>
+    <p><b>Статус:</b> 
+        {% if item.available %}<span class="text-success">Свободна</span>
+        {% else %}<span class="text-danger">Занята</span>{% endif %}
+    </p>
+    <div class="actions">
+        {% if current_user.is_authenticated and current_user.is_admin() %}
+            <a href="{{ url_for('item_edit', item_id=item.id) }}" class="btn">Редактировать</a>
+        {% endif %}
+        <a href="{{ url_for('item_list') }}" class="btn btn-clear">← К списку</a>
+    </div>
+{% endblock %}

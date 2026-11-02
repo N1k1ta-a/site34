@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Личный кабинет{% endblock %}
+{% block content %}
+    <h1>Личный кабинет</h1>
+    <div class="profile-info">
+        <p><b>Имя пользователя:</b> {{ user.username }}</p>
+        <p><b>Роль:</b> 
+            {% if user.is_admin() %}<span class="text-danger">Администратор</span>
+            {% else %}<span class="text-success">Пользователь</span>{% endif %}
+        </p>
+    </div>
+    <div class="actions">
+        <a href="{{ url_for('change_password') }}" class="btn">Сменить пароль</a>
+        <a href="{{ url_for('item_list') }}" class="btn btn-clear">К зонам клуба</a>
+    </div>
+{% endblock %}

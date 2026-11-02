@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Зоны клуба{% endblock %}
+{% block content %}
+    <div class="page-header">
+        <h1>Зоны клуба</h1>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('item_add') }}" class="btn">+ Добавить зону</a>
+        {% endif %}
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, msg in messages %}
+                <p class="flash flash-{{ category }}">{{ msg }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="GET" class="filter-form">
+        <input type="text" name="q" value="{{ q }}" placeholder="Поиск по названию...">
+        <select name="category">
+            <option value="">Все категории</option>
+            {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if selected == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn">Искать</button>
+        {% if q or selected %}<a href="{{ url_for('item_list') }}" class="btn btn-clear">Сбросить</a>{% endif %}
+    </form>
+    
+    {% if items %}
+        <ul class="item-list">
+            {% for item in items %}
+                <li>
+                    <div>
+                        <a href="{{ url_for('item_detail', item_id=item.id) }}"><b>{{ item.title }}</b></a>
+                        <span class="badge">{{ item.category.name if item.category else '—' }}</span>
+                        {% if not item.available %} — <span class="text-danger">занято</span>{% endif %}
+                    </div>
+                    {% if current_user.is_authenticated and current_user.is_admin() %}
+                        <form method="POST" action="{{ url_for('item_delete', item_id=item.id) }}">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Удалить?')">Удалить</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Зон пока нет. Самое время добавить!</p>
+    {% endif %}
+{% endblock %}

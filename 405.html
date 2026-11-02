@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Метод не разрешён{% endblock %}
+
+{% block content %}
+    <h1>405 — Метод не разрешён</h1>
+    <p>Этот метод нельзя использовать для данного URL.</p>
+    <p><a href="{{ url_for('index') }}">На главную</a></p>
+{% endblock %}

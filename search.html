@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Поиск{% endblock %}
+
+{% block content %}
+    <h1>Поиск по клубу</h1>
+    <form method="GET" action="{{ url_for('search') }}">
+        <p>
+            <label>Запрос:<br>
+                <input type="text" name="q" value="{{ q }}">
+            </label>
+        </p>
+        <p>
+            <label>Категория:<br>
+                <input type="text" name="category" value="{{ category }}">
+            </label>
+        </p>
+        <p>
+            <label>Лимит:<br>
+                <input type="number" name="limit" value="{{ limit }}">
+            </label>
+        </p>
+        <button type="submit">Искать</button>
+    </form>
+
+    {% if q %}
+        <p>Ищем «{{ q }}»{% if category %} в категории «{{ category }}»{% endif %},
+           максимум результатов: {{ limit }}</p>
+    {% else %}
+        <p>Введите поисковый запрос.</p>
+    {% endif %}
+{% endblock %}
